@@ -1,0 +1,119 @@
+esphome:
+  name: esphome-kamstrup-403
+  friendly_name: ESPHome Kamstrup 403
+  includes:
+    - esphome-kamstrup-403/kmp.h
+    - esphome-kamstrup-403/multical402.h
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "<YOUR ENCRYPTION KEY>"
+
+ota:
+  password: "f9914d395566182d3d50d94c55fc5c16"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome-Kamstrup-403"
+    password: "<YOUR BACKUP PASSWORD>"
+
+
+uart:
+- id: uart_ir1
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 1200
+  stop_bits: 1
+
+#Multical Custom Sensor (first variable is update interval in ms; 3600000 is 1 hour)
+custom_component:
+  - lambda: |-
+      auto multical402 = new Multical402(
+        900000,
+        id(uart_ir1),
+        id(m_energy),
+        id(m_power),
+        id(m_tin),
+        id(m_tout),
+        id(m_tdiff),
+        id(m_flow),
+        id(m_volume));
+      App.register_component(multical402);
+      return {multical402};
+    components:
+      - id: multical
+
+sensor:
+  #Multical Custom Sensors
+  - name: "Multical Energy"
+    platform: template
+    id: m_energy
+    icon: "mdi:lightning-bolt"
+    unit_of_measurement: MWh
+    accuracy_decimals: 3
+    state_class: "total_increasing"
+    device_class: "energy"
+
+  - name: "Multical Volume"
+    platform: template
+    id: m_volume
+    unit_of_measurement: m3
+    accuracy_decimals: 2
+    state_class: "measurement"
+
+  - name: "Multical Temperature In"
+    platform: template
+    id: m_tin
+    icon: "mdi:thermometer"
+    unit_of_measurement: °C
+    accuracy_decimals: 2
+    state_class: "measurement"
+    device_class: "temperature"
+
+  - name: "Multical Temperature Out"
+    platform: template
+    id: m_tout
+    icon: "mdi:thermometer"
+    unit_of_measurement: °C
+    accuracy_decimals: 2
+    state_class: "measurement"
+    device_class: "temperature"
+
+  - name: "Multical Temperature Diff"
+    platform: template
+    id: m_tdiff
+    icon: "mdi:thermometer"
+    unit_of_measurement: °C
+    accuracy_decimals: 2
+    state_class: "measurement"
+    device_class: "temperature"
+
+  - name: "Multical Power"
+    platform: template
+    id: m_power
+    icon: "mdi:flash"
+    unit_of_measurement: kW
+    accuracy_decimals: 1
+    state_class: "measurement"
+    device_class: "power"
+
+  - name: "Multical Flow"
+    platform: template
+    id: m_flow
+    unit_of_measurement: l/h
+    accuracy_decimals: 0
+    state_class: "measurement"
+
+
+captive_portal:
